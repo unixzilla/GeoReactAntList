@@ -2,39 +2,27 @@ import { Button, Table } from 'antd';
 import React, { useState } from 'react';
 const columns = [
   {
-    title: 'Name',
-    dataIndex: 'name',
-  },
-  {
-    title: 'Age',
-    dataIndex: 'age',
-  },
-  {
-    title: 'Address',
-    dataIndex: 'address',
+    title: 'Location',
+    dataIndex: 'locationNmae',
   },
 ];
 const data = [
     {
       key: 1,
-      name: 'Mike',
-      age: 32,
-      address: '10 Downing Street',
+      locationNmae: 'Mike',
+     
     },
     {
       key: 2,
-      name: 'John',
-      age: 42,
-      address: '10 Downing Street',
-    },
+      locationNmae: 'John',
+     },
   ];
 
 for (let i = 3; i < 46; i++) {
   data.push({
     key: i,
-    name: `Edward King ${i}`,
-    age: 32,
-    address: `London, Park Lane no. ${i}`,
+    locationNmae: `Edward King ${i}`,
+   
   });
 }
 
@@ -68,8 +56,8 @@ const List = () => {
           marginBottom: 16,
         }}
       >
-        <Button type="primary" onClick={start} disabled={!hasSelected} loading={loading}>
-          Reload
+        <Button type="primary" danger onClick={start} disabled={!hasSelected} loading={loading}>
+          Delete
         </Button>
         <span
           style={{
