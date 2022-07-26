@@ -1,14 +1,11 @@
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import React, {useEffect} from 'react';
-
-const position: [number, number] = [51.505, -0.09];
+import {SearchedList} from './List';
 
 export interface MarkList {
   position: [number, number]
 }
 export interface MapProps {
-  markers: Array<MarkList>;
-  lastMarker:[number, number];
+  markers: Array<SearchedList>;
 }
 
 const LatestMarker = (props: MarkList) => {
@@ -18,9 +15,10 @@ const LatestMarker = (props: MarkList) => {
   return null
 }
 
+
 export const Map = (props: MapProps) => {
   const markers = props.markers;
-  const lastMarker:[number, number] = props.lastMarker;
+  const lastMarker:[number, number] = (markers.length > 0 ) ? markers[markers.length - 1].position : [43.658883735915914, -79.38076286800805];
 
   return (
     <MapContainer center={lastMarker} zoom={12} scrollWheelZoom={false}>

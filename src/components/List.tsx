@@ -1,6 +1,5 @@
 import { Button, Table } from 'antd';
-import Search from 'antd/lib/transfer/search';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 const columns = [
   {
     title: 'Location',
@@ -11,21 +10,25 @@ const columns = [
 export interface SearchedList {
   key: number;
   locationNmae: string;
-  
+  position: [number, number];
 }
 
 export interface ListProps {
   searched: Array<SearchedList>;
+  onRemoveLocations: (list: React.Key[]) => any;
 }
 
 const List = (props: ListProps) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [loading, setLoading] = useState(false);
-  const data = props.searched;
+  const [dataSource, setDataSource] = useState<Array<SearchedList>>([]);
+  let data = props.searched;
+
   const start = () => {
     setLoading(true); // ajax request after empty completing
     console.log(selectedRowKeys);
     setTimeout(() => {
+      props.onRemoveLocations(selectedRowKeys);
       setSelectedRowKeys([]);
       setLoading(false);
     }, 1000);
@@ -40,6 +43,11 @@ const List = (props: ListProps) => {
     selectedRowKeys,
     onChange: onSelectChange,
   };
+
+  useEffect(() => {
+    setDataSource(data);
+  });
+
   const hasSelected = selectedRowKeys.length > 0;
   return (
     <div>
@@ -60,7 +68,7 @@ const List = (props: ListProps) => {
         </span>
       </div>
 
-      <Table rowSelection={rowSelection} columns={columns} dataSource={data} />
+      <Table rowSelection={rowSelection} columns={columns} dataSource={dataSource} />
     </div>
   );
 };

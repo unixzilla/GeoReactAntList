@@ -1,20 +1,23 @@
 import React, { FC, useState, useRef } from 'react';
 import { Layout, Divider, Button, Modal, Input, Row, Col, Card, InputRef } from 'antd';
-import { Map, MarkList } from './components/Map';
+import { Map } from './components/Map';
 import axios from 'axios';
-import List, {ListProps, SearchedList} from './components/List';
+import List, { SearchedList } from './components/List';
 import './App.css';
 
 const { Header, Content, Footer } = Layout;
 const { Search } = Input;
+const AK: String = 'c27f0ce5e76be00366bc64aac78cf76e';
+const geoAPIForwadURL: string = `http://api.positionstack.com/v1/forward?timezone_module=1&access_key=${AK}&query=`;
+const geoAPIReverseURL: string = `http://api.positionstack.com/v1/reverse?timezone_module=1&access_key=${AK}&query=`;
 
 
 interface LatestSearchedTimeZoneResultProps {
-  timezone:string;
+  timezone: string;
 }
-const LatestSearchedTimeZoneResult = (props:LatestSearchedTimeZoneResultProps) => {
+const LatestSearchedTimeZoneResult = (props: LatestSearchedTimeZoneResultProps) => {
   const timezone = props.timezone;
-  let date = new Date().toLocaleString("en-US", {timeZone:timezone})
+  let date = new Date().toLocaleString("en-US", { timeZone: timezone })
   return (
     <Card >
       <p>Latest Searched Time Zone: {timezone} </p>
@@ -26,69 +29,88 @@ const LatestSearchedTimeZoneResult = (props:LatestSearchedTimeZoneResultProps) =
 interface LatLong {
   latitude: number;
   longitude: number;
+  location: string;
 }
-
-const getLocation = new Promise<LatLong>((resolve, reject) => {
-
-  navigator.geolocation.getCurrentPosition((position) => {
-    resolve(
-      {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      }
-    );
-  }, (error) => reject(error.message));
-
-});
-const AK:String = 'c27f0ce5e76be00366bc64aac78cf76e';
-const geoAPIURL:string = `http://api.positionstack.com/v1/forward?timezone_module=1&access_key=${AK}&query=`;
-
-const App: FC = () => {
-  const inputRef = useRef<InputRef>(null);
-  const [searchLocation, setSearchLocation] = useState("");
-  const [markers,setMarkers] = useState<Array<MarkList>>([])
-  const [lastSearchTimezone, setLastSearchTimezone] = useState("");
-  const [locationList, setLocationList] = useState<Array<SearchedList>>([]);
-  const [listKey, setListKey] = useState(1);
-  const [myLocation, setMyLocation] = useState([]);
-  const [myLocationLoader, setMyLocationLoader] = useState(false);
-  const [searchLoader, setSearchLoader] = useState(false);
-  const [myLocationMessage, setMyLocationMessage] = useState("");
-  
-  
-  const lookup = async (searchLocationValue:string) => {
-    try{
-      const geoData = await axios.get(`${geoAPIURL}${searchLocationValue}`);
+const lookupLatLong = (latitude: number, longitude: number): Promise<string> => {
+  return new Promise<string>(async (resolve, reject) => {
+    try {
+      const geoData = await axios.get(`${geoAPIReverseURL}${latitude},${longitude}`);
       const results = geoData.data.data;
-      if (results.length == 0) 
-      {
+      if (results.length == 0) {
         Modal.error({
           title: 'Location not found.',
         });
-      }else{
+      } else {
+        const result = results[0];
+        resolve(result.label);
+      }
+    } catch (err) {
+      console.error(err);
+      reject(err);
+    }
+  });
+};
+
+const getLocation = new Promise<LatLong>((resolve, reject) => {
+
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    try {
+      let label: string = await lookupLatLong(position.coords.latitude, position.coords.longitude);
+      resolve(
+        {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          location: label
+        }
+      );
+    } catch (err) {
+      console.log(err);
+    }
+
+  }, (error) => reject(error.message));
+
+});
+
+const App: FC = () => {
+  const inputRef = useRef<InputRef>(null);
+
+  const [lastSearchTimezone, setLastSearchTimezone] = useState("");
+  const [locationList, setLocationList] = useState<Array<SearchedList>>([]);
+  const [listKey, setListKey] = useState(1);
+  const [myLocationLoader, setMyLocationLoader] = useState(false);
+  const [searchLoader, setSearchLoader] = useState(false);
+  const [myLocationMessage, setMyLocationMessage] = useState("");
+
+  const lookup = async (searchLocationValue: string) => {
+    try {
+      const geoData = await axios.get(`${geoAPIForwadURL}${searchLocationValue}`);
+      const results = geoData.data.data;
+      if (results.length == 0) {
+        Modal.error({
+          title: 'Location not found.',
+        });
+      } else {
         const result = results[0];
         setLastSearchTimezone(result.timezone_module.name);
-        setMarkers([...markers,{position:[result.latitude,result.longitude]}])
-        setSearchLocation(searchLocationValue);
-        setListKey(listKey+1);
-        setLocationList([...locationList, { key:listKey, locationNmae: searchLocationValue}]);
+        setListKey(listKey + 1);
+        setLocationList([...locationList, { key: listKey, locationNmae: searchLocationValue, position: [result.latitude, result.longitude] }]);
       }
       setSearchLoader(false);
-    }catch(err){
+    } catch (err) {
       setSearchLoader(false);
       console.error(err);
     }
-    
+
   }
   const onSearch = (value: string) => {
-    if (value.length > 0){
+    if (value.length > 0) {
       setSearchLoader(true);
       lookup(value);
-      
+
     }
   }
   const SearchLocationTextField = () => {
-    
+
     return (
       <Search
         placeholder="Location"
@@ -106,8 +128,9 @@ const App: FC = () => {
     setMyLocationLoader(true);
     try {
       let myLatLong = await getLocation;
+
       setMyLocationLoader(false);
-      setMyLocationMessage("My Location is: Lat:" + myLatLong.latitude + ", Long:" + myLatLong.longitude);
+      setMyLocationMessage(myLatLong.location);
     } catch (err) {
       setMyLocationLoader(false);
       setMyLocationMessage("Error: " + err);
@@ -116,13 +139,23 @@ const App: FC = () => {
 
   const MyLocationButton = () => {
     return (
-      <Button type="primary" shape="round" size="large" loading={myLocationLoader} onClick={()=>setToMyLocation()} disabled={myLocationLoader}>
+      <Button type="primary" shape="round" size="large" loading={myLocationLoader} onClick={() => setToMyLocation()} disabled={myLocationLoader}>
         Get My Location
       </Button>
     );
   }
 
-  const lastMarker:[number, number] = (markers.length > 0 ) ? markers[markers.length - 1].position : [43.658883735915914, -79.38076286800805];
+  const onRemoveLocations = (list: React.Key[]) => {
+    console.log("remove item", list);
+    console.log(locationList);
+    let updatedList = locationList;
+    list.map(id => {
+      updatedList = updatedList.filter(item => item.key !== id)
+    })
+    console.log(updatedList);
+    setLocationList(updatedList);
+  }
+
 
   return (
     <>
@@ -148,25 +181,25 @@ const App: FC = () => {
           <Divider />
           <Row justify="center">
             <Col span={12}>
-              <Map markers={markers} lastMarker={lastMarker} />
+              <Map markers={locationList} />
             </Col>
           </Row>
           <Divider />
           <Row justify="center">
             <Col span={12}>
-              <List searched={locationList} />
+              <List searched={locationList} onRemoveLocations={onRemoveLocations} />
             </Col>
           </Row>
         </Content>
-        {lastSearchTimezone && 
-        <Footer>
-          <Divider />
-          <Row justify="center">
-            <Col span={12}>
-              <LatestSearchedTimeZoneResult timezone={lastSearchTimezone} />
-            </Col>
-          </Row>
-        </Footer>
+        {lastSearchTimezone &&
+          <Footer>
+            <Divider />
+            <Row justify="center">
+              <Col span={12}>
+                <LatestSearchedTimeZoneResult timezone={lastSearchTimezone} />
+              </Col>
+            </Row>
+          </Footer>
         }
       </Layout>
     </>
