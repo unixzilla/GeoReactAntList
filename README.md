@@ -6,7 +6,7 @@ Node.JS
 ## Installation
 git clone the project
 ```sh
-git clone
+git clone https://github.com/unixzilla/GeoReactAntList.git
 ```
 
 then
