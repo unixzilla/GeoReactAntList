@@ -1,4 +1,5 @@
 import { Button, Table } from 'antd';
+import Search from 'antd/lib/transfer/search';
 import React, { useState } from 'react';
 const columns = [
   {
@@ -6,33 +7,24 @@ const columns = [
     dataIndex: 'locationNmae',
   },
 ];
-const data = [
-    {
-      key: 1,
-      locationNmae: 'Mike',
-     
-    },
-    {
-      key: 2,
-      locationNmae: 'John',
-     },
-  ];
 
-for (let i = 3; i < 46; i++) {
-  data.push({
-    key: i,
-    locationNmae: `Edward King ${i}`,
-   
-  });
+export interface SearchedList {
+  key: number;
+  locationNmae: string;
+  
 }
 
-const List = () => {
+export interface ListProps {
+  searched: Array<SearchedList>;
+}
+
+const List = (props: ListProps) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const data = props.searched;
   const start = () => {
     setLoading(true); // ajax request after empty completing
-
+    console.log(selectedRowKeys);
     setTimeout(() => {
       setSelectedRowKeys([]);
       setLoading(false);
@@ -67,6 +59,7 @@ const List = () => {
           {hasSelected ? `Selected ${selectedRowKeys.length} items` : ''}
         </span>
       </div>
+
       <Table rowSelection={rowSelection} columns={columns} dataSource={data} />
     </div>
   );
