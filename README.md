@@ -4,7 +4,7 @@ Node.JS
 
 
 ## Installation
-git clone the project
+Open terminal, git clone the project
 ```sh
 git clone https://github.com/unixzilla/GeoReactAntList.git
 ```
@@ -29,7 +29,12 @@ then
 npm start
 ```
 
+If you want to stop, Press Control+C
+
+
 Open your browser goto http://localhost:3000
+
+
 
 
 enjoy :)
